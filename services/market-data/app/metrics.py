@@ -1,0 +1,28 @@
+from prometheus_client import Counter, Histogram, Info
+
+APP_INFO = Info("app", "Application build info", namespace="signals", subsystem="market_data")
+
+REQUESTS = Counter(
+    "http_requests_total",
+    "HTTP requests",
+    ["method", "path", "status"],
+    namespace="signals",
+    subsystem="market_data",
+)
+
+LATENCY = Histogram(
+    "http_request_duration_seconds",
+    "HTTP request latency",
+    ["method", "path"],
+    namespace="signals",
+    subsystem="market_data",
+    buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0),
+)
+
+FETCH = Counter(
+    "market_data_fetch_total",
+    "Price fetches",
+    ["source", "status"],
+    namespace="signals",
+    subsystem="market_data",
+)

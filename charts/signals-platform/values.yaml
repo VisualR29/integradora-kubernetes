@@ -1,0 +1,72 @@
+# Sustituir por vuestro registry (ghcr.io/<org>/...) tras el primer push de imágenes.
+images:
+  marketData: ghcr.io/example/signals-market-data:dev
+  signalEngine: ghcr.io/example/signals-signal-engine:dev
+  apiBff: ghcr.io/example/signals-api-bff:dev
+  webUi: ghcr.io/example/signals-web-ui:dev
+
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+ingress:
+  enabled: true
+  className: nginx
+  host: signals.local.test
+  annotations: {}
+
+postgresql:
+  enabled: true
+  auth:
+    username: signals
+    password: signals-dev-password
+    database: signals
+  primary:
+    persistence:
+      enabled: true
+      size: 2Gi
+
+marketData:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+signalEngine:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+
+apiBff:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+webUi:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 300m
+      memory: 128Mi
+
+prometheus:
+  serviceMonitor:
+    enabled: false
