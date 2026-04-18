@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: signals
+      POSTGRES_PASSWORD: signals
+      POSTGRES_DB: signals
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U signals -d signals"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  market-data:
+    build:
+      context: ./services/market-data
+    ports:
+      - "8001:8000"
+
+  signal-engine:
+    build:
+      context: ./services/signal-engine
+    ports:
+      - "8002:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://signals:signals@postgres:5432/signals
+      MARKET_DATA_BASE_URL: http://market-data:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      market-data:
+        condition: service_started
+
+  api-bff:
+    build:
+      context: ./services/api-bff
+    ports:
+      - "8080:8000"
+    environment:
+      MARKET_DATA_BASE_URL: http://market-data:8000
+      SIGNAL_ENGINE_BASE_URL: http://signal-engine:8000
+    depends_on:
+      - market-data
+      - signal-engine
+
+  web-ui:
+    build:
+      context: ./web-ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-bff

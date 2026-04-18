@@ -1,0 +1,7 @@
+1. Actualizá las imágenes en values.yaml (ghcr.io/<org>/...).
+2. Instalación Ingress NGINX en el cluster (AKS): según docs/runbook.md
+3. Tras instalar:
+   helm status {{ .Release.Name }}
+   kubectl get ingress
+4. Port-forward UI:
+   kubectl port-forward svc/{{ include "signals-platform.fullname" . }}-web-ui 3000:80

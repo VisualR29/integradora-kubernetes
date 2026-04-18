@@ -1,0 +1,7 @@
+line-length = 100
+target-version = "py312"
+src = ["services/market-data/app", "services/signal-engine/app", "services/api-bff/app"]
+
+[lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]

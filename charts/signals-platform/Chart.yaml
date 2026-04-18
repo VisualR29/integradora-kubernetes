@@ -1,0 +1,11 @@
+apiVersion: v2
+name: signals-platform
+description: MVP señales de inversión (microservicios)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+dependencies:
+  - name: postgresql
+    version: 15.5.24
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
