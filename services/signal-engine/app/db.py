@@ -7,21 +7,26 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.models import SignalRecord
 
-SCHEMA_SQL = """
-CREATE SCHEMA IF NOT EXISTS signals;
-CREATE TABLE IF NOT EXISTS signals.signal_history (
-    id BIGSERIAL PRIMARY KEY,
-    symbol TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    result TEXT NOT NULL,
-    reason TEXT NOT NULL,
-    sma5 DOUBLE PRECISION,
-    sma20 DOUBLE PRECISION,
-    pct_change DOUBLE PRECISION
-);
-CREATE INDEX IF NOT EXISTS signal_history_symbol_created_idx
-ON signals.signal_history (symbol, created_at DESC);
-"""
+# asyncpg no admite varias sentencias en un solo execute(); una por llamada.
+SCHEMA_STATEMENTS = (
+    "CREATE SCHEMA IF NOT EXISTS signals",
+    """
+    CREATE TABLE IF NOT EXISTS signals.signal_history (
+        id BIGSERIAL PRIMARY KEY,
+        symbol TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        result TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        sma5 DOUBLE PRECISION,
+        sma20 DOUBLE PRECISION,
+        pct_change DOUBLE PRECISION
+    )
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS signal_history_symbol_created_idx
+    ON signals.signal_history (symbol, created_at DESC)
+    """,
+)
 
 
 def create_engine(database_url: str):
@@ -30,7 +35,8 @@ def create_engine(database_url: str):
 
 async def init_schema(engine) -> None:
     async with engine.begin() as conn:
-        await conn.execute(text(SCHEMA_SQL))
+        for stmt in SCHEMA_STATEMENTS:
+            await conn.execute(text(stmt))
 
 
 async def insert_signal(session: AsyncSession, row: SignalRecord) -> None:

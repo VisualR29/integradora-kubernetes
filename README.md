@@ -2,6 +2,8 @@
 
 MVP académico: datos de mercado **simulados**, reglas simples (SMA y cambio %), señales **BUY / SELL / HOLD**. **No** hay ejecución de órdenes ni dinero real.
 
+**Guía paso a paso (local, dev, K8s, imágenes):** [docs/GUIA.md](docs/GUIA.md)
+
 ## Requisitos
 
 - Docker y Docker Compose
