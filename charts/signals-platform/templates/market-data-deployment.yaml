@@ -39,6 +39,16 @@ spec:
               port: http
             initialDelaySeconds: 10
             periodSeconds: 20
+          env:
+            - name: MARKET_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "signals-platform.fullname" . }}-db-url
+                  key: url
+            {{- range $k, $v := .Values.marketData.extraEnv }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
           resources:
             {{- toYaml .Values.marketData.resources | nindent 12 }}
 ---

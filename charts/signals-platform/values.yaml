@@ -29,6 +29,10 @@ postgresql:
 
 marketData:
   replicas: 1
+  extraEnv:
+    MARKET_PROVIDER_ORDER: "tiingo,twelvedata,mock"
+    # MARKET_ALLOWED_SYMBOLS: "AAPL,MSFT"
+    # MARKET_STALE_AFTER_SECONDS: "86400"
   resources:
     requests:
       cpu: 50m

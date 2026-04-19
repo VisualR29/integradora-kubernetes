@@ -89,7 +89,7 @@ async def _get_latest_signal(symbol: str) -> SignalRecord:
 @app.get("/api/v1/summary", response_model=SummaryResponse)
 async def summary(symbol: str):
     sym = _symbol(symbol)
-    prices, signal = await _get_prices(sym, 40), await _get_latest_signal(sym)
+    prices, signal = await _get_prices(sym, settings.summary_prices_limit), await _get_latest_signal(sym)
     return SummaryResponse(symbol=sym, prices=prices, signal=signal)
 
 
