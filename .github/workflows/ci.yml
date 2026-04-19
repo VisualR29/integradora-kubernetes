@@ -15,6 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Asegúrate de que estos nombres coincidan EXACTAMENTE con tus carpetas
         service: [market-data, signal-engine, api-bff]
     steps:
       - uses: actions/checkout@v4
@@ -32,13 +33,15 @@ jobs:
           pip install ruff pytest
 
       - name: Ruff check
-        run: ruff check services/${{ matrix.service }}/app services/${{ matrix.service }}/tests
+        # Cambiamos a working-directory para que ruff no se pierda con las rutas
+        working-directory: services/${{ matrix.service }}
+        run: ruff check app tests
 
       - name: Pytest
         working-directory: services/${{ matrix.service }}
-        run: pytest -q
+        # Ejecutamos pytest directamente; usará el pytest.ini que vimos en tu captura
+        run: pytest -v
 
-      # ESTE ES EL PASO CLAVE: Convierte VisualR29 a visualr29
       - name: Set lower case owner name
         run: |
           echo "OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -49,9 +52,9 @@ jobs:
       - name: Docker build (no push)
         uses: docker/build-push-action@v6
         with:
+          # Contexto es la carpeta del servicio donde está el Dockerfile
           context: services/${{ matrix.service }}
           push: false
-          # Usamos la variable en minúsculas
           tags: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/signals-${{ matrix.service }}:ci-${{ github.sha }}
 
   web-ui:
@@ -71,7 +74,6 @@ jobs:
           npm install
           npm run build
 
-      # VOLVEMOS A APLICAR EL MISMO PASO AQUÍ
       - name: Set lower case owner name
         run: |
           echo "OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
