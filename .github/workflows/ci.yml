@@ -29,9 +29,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          # Instalamos las herramientas de test PRIMERO para asegurar el PATH
+          pip install ruff pytest httpx
+          # Instalamos el resto de las dependencias
           pip install -r services/${{ matrix.service }}/requirements.txt
-          pip install ruff pytest
-
       - name: Ruff check
         # Cambiamos a working-directory para que ruff no se pierda con las rutas
         working-directory: services/${{ matrix.service }}
