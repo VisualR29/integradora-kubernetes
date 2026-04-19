@@ -1,5 +1,18 @@
 # charts (Helm — `signals-platform`)
 
+## Orden sugerido de desarrollo (proyecto)
+
+1. **GitHub** — CI en cada cambio; release e imágenes cuando el código compile y pase pruebas.
+2. **market-data** — Fuente de precios estable (mock primero; proveedor real después).
+3. **signal-engine** — Reglas y persistencia; depende de market-data y Postgres.
+4. **api-bff** — Agregación para la UI; depende de market-data y signal-engine.
+5. **web-ui** — Pantalla sobre el contrato del BFF.
+6. **charts** — Empaquetado Helm (imágenes, Postgres, Ingress, probes).
+7. **deploy** — Compose local, namespaces y procedimiento de instalación/upgrade.
+8. **monitoring** — Scrape, dashboards y alertas sobre un despliegue ya funcional.
+
+**Este documento:** paso **6** de 8 — ajustar el chart cuando las imágenes y variables de los servicios estén definidas.
+
 ## Cómo funciona actualmente
 
 - **Chart principal**: `charts/signals-platform`, versión de chart/app `0.1.0`.

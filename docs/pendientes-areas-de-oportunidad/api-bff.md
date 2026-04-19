@@ -1,5 +1,18 @@
 # api-bff (Backend for Frontend)
 
+## Orden sugerido de desarrollo (proyecto)
+
+1. **GitHub** — CI en cada cambio; release e imágenes cuando el código compile y pase pruebas.
+2. **market-data** — Fuente de precios estable (mock primero; proveedor real después).
+3. **signal-engine** — Reglas y persistencia; depende de market-data y Postgres.
+4. **api-bff** — Agregación para la UI; depende de market-data y signal-engine.
+5. **web-ui** — Pantalla sobre el contrato del BFF.
+6. **charts** — Empaquetado Helm (imágenes, Postgres, Ingress, probes).
+7. **deploy** — Compose local, namespaces y procedimiento de instalación/upgrade.
+8. **monitoring** — Scrape, dashboards y alertas sobre un despliegue ya funcional.
+
+**Este documento:** paso **4** de 8 — conviene tener market-data y signal-engine razonablemente cerrados antes de endurecer el BFF y su contrato.
+
 > En el repositorio el servicio se llama **`api-bff`**. Si te referías a “api.biff”, es el mismo componente: capa BFF frente al navegador.
 
 ## Cómo funciona actualmente

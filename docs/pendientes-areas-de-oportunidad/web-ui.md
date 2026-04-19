@@ -1,5 +1,18 @@
 # web-ui
 
+## Orden sugerido de desarrollo (proyecto)
+
+1. **GitHub** — CI en cada cambio; release e imágenes cuando el código compile y pase pruebas.
+2. **market-data** — Fuente de precios estable (mock primero; proveedor real después).
+3. **signal-engine** — Reglas y persistencia; depende de market-data y Postgres.
+4. **api-bff** — Agregación para la UI; depende de market-data y signal-engine.
+5. **web-ui** — Pantalla sobre el contrato del BFF.
+6. **charts** — Empaquetado Helm (imágenes, Postgres, Ingress, probes).
+7. **deploy** — Compose local, namespaces y procedimiento de instalación/upgrade.
+8. **monitoring** — Scrape, dashboards y alertas sobre un despliegue ya funcional.
+
+**Este documento:** paso **5** de 8 — desarrollar cuando el BFF exponga de forma estable `summary` y `recalculate`.
+
 ## Cómo funciona actualmente
 
 - **Stack**: React + Vite + TypeScript; estilos en `styles.css`.

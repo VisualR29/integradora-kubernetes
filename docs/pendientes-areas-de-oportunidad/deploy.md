@@ -1,5 +1,18 @@
 # deploy (entornos y despliegue local)
 
+## Orden sugerido de desarrollo (proyecto)
+
+1. **GitHub** — CI en cada cambio; release e imágenes cuando el código compile y pase pruebas.
+2. **market-data** — Fuente de precios estable (mock primero; proveedor real después).
+3. **signal-engine** — Reglas y persistencia; depende de market-data y Postgres.
+4. **api-bff** — Agregación para la UI; depende de market-data y signal-engine.
+5. **web-ui** — Pantalla sobre el contrato del BFF.
+6. **charts** — Empaquetado Helm (imágenes, Postgres, Ingress, probes).
+7. **deploy** — Compose local, namespaces y procedimiento de instalación/upgrade.
+8. **monitoring** — Scrape, dashboards y alertas sobre un despliegue ya funcional.
+
+**Este documento:** paso **7** de 8 — documentar y alinear compose, namespaces y `helm install` tras tener el chart usable.
+
 ## Cómo funciona actualmente
 
 - **`docker-compose.yml`**: orquesta **Postgres 16**, **market-data** (8001→8000), **signal-engine** (8002→8000) con `DATABASE_URL` y `MARKET_DATA_BASE_URL`, **api-bff** (8080→8000) con URLs a los otros servicios, **web-ui** (3000→80) que depende del BFF. Healthcheck en Postgres; `depends_on` básico entre servicios.
