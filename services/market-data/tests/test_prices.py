@@ -30,7 +30,7 @@ def test_prices_mock():
 
 def test_prices_invalid():
     r = client.get("/prices/@@")
-    assert r.status_code == 404
+    assert r.status_code == 400
 
 
 def test_prices_symbol_with_hyphen():
@@ -171,3 +171,44 @@ def test_twelvedata_fetch_daily_parses_values():
     pts = asyncio.run(run())
     assert len(pts) == 2
     assert pts[-1].close == 11.5
+
+
+def test_fallback_tiingo_500_to_twelvedata():
+    def handler(request: httpx.Request) -> httpx.Response:
+        u = str(request.url)
+        if "/tiingo/daily/" in u:
+            return httpx.Response(500, text="upstream")
+        if "/time_series" in u:
+            return httpx.Response(
+                200,
+                json={
+                    "values": [
+                        {
+                            "datetime": "2024-01-04",
+                            "open": "10",
+                            "high": "11",
+                            "low": "9",
+                            "close": "10.5",
+                            "volume": "100",
+                        }
+                    ]
+                },
+            )
+        return httpx.Response(404)
+
+    transport = httpx.MockTransport(handler)
+    cfg = Settings(
+        database_url=None,
+        tiingo_token="t",
+        twelvedata_api_key="k",
+        provider_order="tiingo,twelvedata,mock",
+    )
+
+    async def run():
+        async with httpx.AsyncClient(transport=transport) as hc:
+            return await resolve_prices(cfg, None, "AAPL", 1, http_client=hc)
+
+    r = asyncio.run(run())
+    assert r.source == "twelvedata"
+    assert len(r.points) == 1
+    assert r.points[0].close == 10.5

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from datetime import UTC, datetime, timedelta
 
 import httpx
@@ -12,7 +13,7 @@ from app.db import (
     upsert_candles,
     upsert_sync_meta,
 )
-from app.metrics import FETCH
+from app.metrics import FETCH, PROVIDER_LATENCY
 from app.mock_series import generate_mock_series
 from app.models import PricePoint, PriceSeriesResponse
 from app.providers import twelve_data, tiingo
@@ -52,6 +53,8 @@ async def resolve_prices(
     session_maker: async_sessionmaker[AsyncSession] | None,
     symbol: str,
     limit: int,
+    *,
+    http_client: httpx.AsyncClient | None = None,
 ) -> PriceSeriesResponse:
     sym = symbol.strip().upper()
     if not _valid_symbol(sym):
@@ -82,12 +85,34 @@ async def resolve_prices(
             FETCH.labels("postgres", "ok").inc()
             return PriceSeriesResponse(symbol=sym, source="postgres", points=db_points)
 
-    async with httpx.AsyncClient(headers={"User-Agent": "signals-market-data/0.2"}) as client:
-        for name in order:
-            if name == "mock":
-                continue
-            try:
-                if name == "tiingo" and settings.tiingo_token:
+    if http_client is None:
+        async with httpx.AsyncClient(headers={"User-Agent": "signals-market-data/0.2"}) as client:
+            return await _fetch_providers_then_fallback(
+                settings, session_maker, sym, limit, db_points, interval, timeout, order, client
+            )
+    return await _fetch_providers_then_fallback(
+        settings, session_maker, sym, limit, db_points, interval, timeout, order, http_client
+    )
+
+
+async def _fetch_providers_then_fallback(
+    settings: Settings,
+    session_maker: async_sessionmaker[AsyncSession] | None,
+    sym: str,
+    limit: int,
+    db_points: list[PricePoint],
+    interval: str,
+    timeout: float,
+    order: list[str],
+    client: httpx.AsyncClient,
+) -> PriceSeriesResponse:
+    for name in order:
+        if name == "mock":
+            continue
+        try:
+            if name == "tiingo" and settings.tiingo_token:
+                start = time.perf_counter()
+                try:
                     pts = await tiingo.fetch_daily_prices(
                         client,
                         base_url=settings.tiingo_base_url,
@@ -96,11 +121,15 @@ async def resolve_prices(
                         limit=limit,
                         timeout=timeout,
                     )
-                    if pts:
-                        await _persist(settings, session_maker, sym, interval, pts, "tiingo")
-                        FETCH.labels("tiingo", "ok").inc()
-                        return PriceSeriesResponse(symbol=sym, source="tiingo", points=pts)
-                elif name in ("twelvedata", "twelve_data", "12data") and settings.twelvedata_api_key:
+                finally:
+                    PROVIDER_LATENCY.labels("tiingo").observe(time.perf_counter() - start)
+                if pts:
+                    await _persist(settings, session_maker, sym, interval, pts, "tiingo")
+                    FETCH.labels("tiingo", "ok").inc()
+                    return PriceSeriesResponse(symbol=sym, source="tiingo", points=pts)
+            elif name in ("twelvedata", "twelve_data", "12data") and settings.twelvedata_api_key:
+                start = time.perf_counter()
+                try:
                     pts = await twelve_data.fetch_daily_time_series(
                         client,
                         base_url=settings.twelvedata_base_url,
@@ -109,14 +138,16 @@ async def resolve_prices(
                         limit=limit,
                         timeout=timeout,
                     )
-                    if pts:
-                        await _persist(settings, session_maker, sym, interval, pts, "twelvedata")
-                        FETCH.labels("twelvedata", "ok").inc()
-                        return PriceSeriesResponse(symbol=sym, source="twelvedata", points=pts)
-            except httpx.HTTPStatusError as e:
-                FETCH.labels(name, f"http_{e.response.status_code}").inc()
-            except Exception:
-                FETCH.labels(name, "error").inc()
+                finally:
+                    PROVIDER_LATENCY.labels("twelvedata").observe(time.perf_counter() - start)
+                if pts:
+                    await _persist(settings, session_maker, sym, interval, pts, "twelvedata")
+                    FETCH.labels("twelvedata", "ok").inc()
+                    return PriceSeriesResponse(symbol=sym, source="twelvedata", points=pts)
+        except httpx.HTTPStatusError as e:
+            FETCH.labels(name, f"http_{e.response.status_code}").inc()
+        except Exception:
+            FETCH.labels(name, "error").inc()
 
     if db_points:
         FETCH.labels("postgres_stale", "ok").inc()

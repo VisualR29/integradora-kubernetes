@@ -65,7 +65,7 @@ async def get_prices(request: Request, symbol: str, limit: int | None = None):
     try:
         return await resolve_prices(settings, sm, symbol, lim)
     except ValueError:
-        raise HTTPException(status_code=404, detail="invalid symbol") from None
+        raise HTTPException(status_code=400, detail="invalid symbol") from None
     except SymbolNotPermitted:
         raise HTTPException(
             status_code=403,

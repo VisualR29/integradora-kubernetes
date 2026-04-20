@@ -12,5 +12,13 @@ class PricePoint(BaseModel):
 
 class PriceSeriesResponse(BaseModel):
     symbol: str
-    source: str
+    source: str = Field(
+        description=(
+            "Origen de la serie: "
+            "`tiingo` | `twelvedata` (API externa), "
+            "`postgres` (cache acorde a MARKET_STALE_AFTER_SECONDS), "
+            "`postgres_stale` (solo cache si la sync externa está vencida), "
+            "`mock` (sin claves o tras agotar proveedores)."
+        ),
+    )
     points: list[PricePoint]

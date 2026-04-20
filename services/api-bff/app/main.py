@@ -72,6 +72,8 @@ async def _get_prices(symbol: str, limit: int = 40) -> PriceSeriesResponse:
     assert client is not None
     url = f"{settings.market_data_base_url.rstrip('/')}/prices/{symbol}"
     r = await client.get(url, params={"limit": limit})
+    if r.status_code == 400:
+        raise HTTPException(status_code=400, detail="invalid symbol")
     if r.status_code >= 400:
         raise HTTPException(status_code=502, detail="market_data_error")
     return PriceSeriesResponse.model_validate(r.json())
