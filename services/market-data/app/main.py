@@ -8,20 +8,29 @@ from fastapi.responses import PlainTextResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.config import Settings
-from app.metrics import APP_INFO, FETCH, LATENCY, REQUESTS
-from app.mock_series import generate_mock_series
+from app.db import create_engine, init_schema, session_factory
+from app.metrics import APP_INFO, LATENCY, REQUESTS
 from app.models import PriceSeriesResponse
+from app.price_service import SymbolNotPermitted, resolve_prices
 
 settings = Settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    APP_INFO.info({"version": "0.1.0", "service": settings.service_name})
+    APP_INFO.info({"version": "0.2.0", "service": settings.service_name})
+    engine = None
+    app.state.session_maker = None
+    if settings.database_url:
+        engine = create_engine(settings.database_url)
+        await init_schema(engine)
+        app.state.session_maker = session_factory(engine)
     yield
+    if engine is not None:
+        await engine.dispose()
 
 
-app = FastAPI(title="market-data", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="market-data", version="0.2.0", lifespan=lifespan)
 
 
 @app.middleware("http")
@@ -49,12 +58,16 @@ def metrics():
 
 
 @app.get("/prices/{symbol}", response_model=PriceSeriesResponse)
-def get_prices(symbol: str, limit: int | None = None):
-    sym = symbol.strip().upper()
-    if not sym or not sym.replace(".", "").isalnum():
-        raise HTTPException(status_code=404, detail="invalid symbol")
+async def get_prices(request: Request, symbol: str, limit: int | None = None):
     lim = limit or settings.default_price_limit
     lim = max(1, min(lim, settings.max_price_limit))
-    points = generate_mock_series(sym, lim)
-    FETCH.labels("mock", "ok").inc()
-    return PriceSeriesResponse(symbol=sym, source="mock", points=points)
+    sm = getattr(request.app.state, "session_maker", None)
+    try:
+        return await resolve_prices(settings, sm, symbol, lim)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="invalid symbol") from None
+    except SymbolNotPermitted:
+        raise HTTPException(
+            status_code=403,
+            detail="symbol not permitted for this deployment (see MARKET_ALLOWED_SYMBOLS)",
+        ) from None

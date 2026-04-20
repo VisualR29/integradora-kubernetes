@@ -72,6 +72,8 @@ async def _get_prices(symbol: str, limit: int = 40) -> PriceSeriesResponse:
     assert client is not None
     url = f"{settings.market_data_base_url.rstrip('/')}/prices/{symbol}"
     r = await client.get(url, params={"limit": limit})
+    if r.status_code == 400:
+        raise HTTPException(status_code=400, detail="invalid symbol")
     if r.status_code >= 400:
         raise HTTPException(status_code=502, detail="market_data_error")
     return PriceSeriesResponse.model_validate(r.json())
@@ -89,7 +91,7 @@ async def _get_latest_signal(symbol: str) -> SignalRecord:
 @app.get("/api/v1/summary", response_model=SummaryResponse)
 async def summary(symbol: str):
     sym = _symbol(symbol)
-    prices, signal = await _get_prices(sym, 40), await _get_latest_signal(sym)
+    prices, signal = await _get_prices(sym, settings.summary_prices_limit), await _get_latest_signal(sym)
     return SummaryResponse(symbol=sym, prices=prices, signal=signal)
 
 

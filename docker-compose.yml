@@ -12,12 +12,24 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   market-data:
     build:
       context: ./services/market-data
     ports:
       - "8001:8000"
+    environment:
+      MARKET_DATABASE_URL: postgresql+asyncpg://signals:signals@postgres:5432/signals
+      MARKET_PROVIDER_ORDER: ${MARKET_PROVIDER_ORDER:-tiingo,twelvedata,mock}
+      MARKET_TIINGO_TOKEN: ${MARKET_TIINGO_TOKEN:-}
+      MARKET_TWELVEDATA_API_KEY: ${MARKET_TWELVEDATA_API_KEY:-}
+      MARKET_STALE_AFTER_SECONDS: ${MARKET_STALE_AFTER_SECONDS:-86400}
+      MARKET_ALLOWED_SYMBOLS: ${MARKET_ALLOWED_SYMBOLS:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   signal-engine:
     build:
@@ -52,3 +64,6 @@ services:
       - "3000:80"
     depends_on:
       - api-bff
+
+volumes:
+  postgres_data:
