@@ -1,9 +1,9 @@
 # Sustituir por vuestro registry (ghcr.io/<org>/...) tras el primer push de imágenes.
 images:
-  marketData: ghcr.io/example/signals-market-data:dev
-  signalEngine: ghcr.io/example/signals-signal-engine:dev
-  apiBff: ghcr.io/example/signals-api-bff:dev
-  webUi: ghcr.io/example/signals-web-ui:dev
+  marketData: ghcr.io/visualr29/signals-market-data:latest
+  signalEngine: ghcr.io/visualr29/signals-signal-engine:latest
+  apiBff: ghcr.io/visualr29/signals-api-bff:latest
+  webUi: ghcr.io/visualr29/signals-web-ui:latest
 
 imagePullSecrets: []
 
