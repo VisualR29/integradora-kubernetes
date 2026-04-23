@@ -5,7 +5,8 @@ images:
   apiBff: ghcr.io/visualr29/signals-api-bff:latest
   webUi: ghcr.io/visualr29/signals-web-ui:latest
 
-imagePullSecrets: []
+imagePullSecrets:
+  - name: regcred
 
 nameOverride: ""
 fullnameOverride: ""
