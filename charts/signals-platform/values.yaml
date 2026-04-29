@@ -1,12 +1,17 @@
 # Sustituir por vuestro registry (ghcr.io/<org>/...) tras el primer push de imágenes.
 images:
-  marketData: ghcr.io/visualr29/signals-market-data:latest
-  signalEngine: ghcr.io/visualr29/signals-signal-engine:latest
-  apiBff: ghcr.io/visualr29/signals-api-bff:latest
-  webUi: ghcr.io/visualr29/signals-web-ui:latest
+  marketData: signalsregistry.azurecr.io/market-data:latest
+  signalEngine: signalsregistry.azurecr.io/signal-engine:latest
+  apiBff: signalsregistry.azurecr.io/api-bff:latest
+  webUi: signalsregistry.azurecr.io/web-ui:latest
+  # Usados en desarrollo local
+  # marketData: ghcr.io/visualr29/signals-market-data:latest
+  # signalEngine: ghcr.io/visualr29/signals-signal-engine:latest
+  # apiBff: ghcr.io/visualr29/signals-api-bff:latest
+  # webUi: ghcr.io/visualr29/signals-web-ui:latest
 
-imagePullSecrets:
-  - name: regcred
+# imagePullSecrets:
+  # - name: regcred
 
 nameOverride: ""
 fullnameOverride: ""
@@ -19,6 +24,10 @@ ingress:
 
 postgresql:
   enabled: true
+  image:
+    registry: docker.io
+    repository: bitnami/postgresql
+    tag: 16.3.0-debian-12-r0
   auth:
     username: signals
     password: signals-dev-password
