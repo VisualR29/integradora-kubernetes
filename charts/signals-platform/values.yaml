@@ -25,9 +25,9 @@ ingress:
 postgresql:
   enabled: true
   image:
-    registry: docker.io
-    repository: bitnami/postgresql
-    tag: 16.3.0-debian-12-r0
+    registry: signalsregistry.azurecr.io
+    repository: postgresql
+    tag: 16
   auth:
     username: signals
     password: signals-dev-password
