@@ -62,6 +62,10 @@ jobs:
       # 3. Desplegar la actualización con Helm
       - name: Helm Upgrade
         run: |
+          # 1. Primero descargamos las dependencias del Chart (como PostgreSQL)
+          helm dependency build ./charts/signals-platform
+          
+          # 2. Luego instalamos/actualizamos la plataforma
           helm upgrade --install heimdall ./charts/signals-platform \
             --set images.marketData=signalsregistry.azurecr.io/market-data:latest \
             --set images.signalEngine=signalsregistry.azurecr.io/signal-engine:latest \
