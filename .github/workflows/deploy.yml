@@ -32,7 +32,7 @@ jobs:
           docker build -t signalsregistry.azurecr.io/market-data:latest ./services/market-data
           docker build -t signalsregistry.azurecr.io/signal-engine:latest ./services/signal-engine
           docker build -t signalsregistry.azurecr.io/api-bff:latest ./services/api-bff
-          docker build -t signalsregistry.azurecr.io/web-ui:latest ./services/web-ui
+          docker build -t signalsregistry.azurecr.io/web-ui:latest ./web-ui
           docker push signalsregistry.azurecr.io/market-data:latest
           docker push signalsregistry.azurecr.io/signal-engine:latest
           docker push signalsregistry.azurecr.io/api-bff:latest
