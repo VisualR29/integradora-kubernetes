@@ -56,7 +56,6 @@ jobs:
       - name: Set AKS Context
         uses: azure/aks-set-context@v3
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
           resource-group: rg-signals-platform
           cluster-name: aks-signals-platform
 
