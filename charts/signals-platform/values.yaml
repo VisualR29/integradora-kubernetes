@@ -1,11 +1,17 @@
 # Sustituir por vuestro registry (ghcr.io/<org>/...) tras el primer push de imágenes.
 images:
-  marketData: ghcr.io/example/signals-market-data:dev
-  signalEngine: ghcr.io/example/signals-signal-engine:dev
-  apiBff: ghcr.io/example/signals-api-bff:dev
-  webUi: ghcr.io/example/signals-web-ui:dev
+  marketData: signalsregistry.azurecr.io/market-data:latest
+  signalEngine: signalsregistry.azurecr.io/signal-engine:latest
+  apiBff: signalsregistry.azurecr.io/api-bff:latest
+  webUi: signalsregistry.azurecr.io/web-ui:latest
+  # Usados en desarrollo local
+  # marketData: ghcr.io/visualr29/signals-market-data:latest
+  # signalEngine: ghcr.io/visualr29/signals-signal-engine:latest
+  # apiBff: ghcr.io/visualr29/signals-api-bff:latest
+  # webUi: ghcr.io/visualr29/signals-web-ui:latest
 
-imagePullSecrets: []
+# imagePullSecrets:
+  # - name: regcred
 
 nameOverride: ""
 fullnameOverride: ""
@@ -18,6 +24,10 @@ ingress:
 
 postgresql:
   enabled: true
+  image:
+    registry: signalsregistry.azurecr.io
+    repository: postgresql
+    tag: 16
   auth:
     username: signals
     password: signals-dev-password
