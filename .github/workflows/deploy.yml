@@ -59,13 +59,17 @@ jobs:
           resource-group: rg-signals-platform
           cluster-name: aks-signals-platform
 
-      # 3. Desplegar la actualización con Helm
+# 3. Desplegar la actualización con Helm
       - name: Helm Upgrade
         run: |
-          # 1. Primero descargamos las dependencias del Chart (como PostgreSQL)
+          # 1. Agregamos el repositorio de Bitnami para que Helm sepa dónde buscar PostgreSQL
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo update
+          
+          # 2. Descargamos las dependencias del Chart
           helm dependency build ./charts/signals-platform
           
-          # 2. Luego instalamos/actualizamos la plataforma
+          # 3. Instalamos/actualizamos la plataforma
           helm upgrade --install heimdall ./charts/signals-platform \
             --set images.marketData=signalsregistry.azurecr.io/market-data:latest \
             --set images.signalEngine=signalsregistry.azurecr.io/signal-engine:latest \
