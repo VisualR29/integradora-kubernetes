@@ -2,23 +2,22 @@ name: Deploy to AKS
 
 on:
   push:
-    branches: [ main ] # Se activa automáticamente al hacer push a main
+    branches: [ main ]
 
 jobs:
   build-and-push:
     name: Build and Push to ACR
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout del código
         uses: actions/checkout@v4
 
-      # 1. Autenticación en Azure con credenciales de Service Principal
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 2. Autenticación en tu Azure Container Registry (ACR)
       - name: Login en ACR
         uses: azure/docker-login@v1
         with:
@@ -26,13 +25,13 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      # 3. Construir y subir las imágenes a tu registro (signalsregistry)
       - name: Build and Push Images
         run: |
           docker build -t signalsregistry.azurecr.io/market-data:latest ./services/market-data
           docker build -t signalsregistry.azurecr.io/signal-engine:latest ./services/signal-engine
           docker build -t signalsregistry.azurecr.io/api-bff:latest ./services/api-bff
           docker build -t signalsregistry.azurecr.io/web-ui:latest ./web-ui
+
           docker push signalsregistry.azurecr.io/market-data:latest
           docker push signalsregistry.azurecr.io/signal-engine:latest
           docker push signalsregistry.azurecr.io/api-bff:latest
@@ -40,40 +39,41 @@ jobs:
 
   deploy-to-aks:
     name: Helm Upgrade on AKS
-    needs: build-and-push # Espera a que las imágenes se suban a ACR
+    needs: build-and-push
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout del código
         uses: actions/checkout@v4
 
-      # 1. Autenticación en Azure
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 2. Obtener contexto del clúster AKS
       - name: Set AKS Context
         uses: azure/aks-set-context@v3
         with:
           resource-group: rg-signals-platform
           cluster-name: aks-signals-platform
 
-# 3. Desplegar la actualización con Helm
-      - name: Helm Upgrade
+      - name: Add Helm repositories
         run: |
-          # 1. Agregamos el repositorio de Bitnami para que Helm sepa dónde buscar PostgreSQL
           helm repo add bitnami https://charts.bitnami.com/bitnami
           helm repo update
-          
-          # 2. Descargamos las dependencias del Chart
+
+      - name: Helm Dependency Build
+        run: |
           helm dependency build ./charts/signals-platform
-          
-          # 3. Instalamos/actualizamos la plataforma
-          helm upgrade --install heimdall ./charts/signals-platform \
+
+      - name: Helm Upgrade
+        run: |
+          helm upgrade --install signals-platform ./charts/signals-platform \
             --set images.marketData=signalsregistry.azurecr.io/market-data:latest \
             --set images.signalEngine=signalsregistry.azurecr.io/signal-engine:latest \
             --set images.apiBff=signalsregistry.azurecr.io/api-bff:latest \
             --set images.webUi=signalsregistry.azurecr.io/web-ui:latest \
             --set postgresql.image.registry=signalsregistry.azurecr.io \
+            --set postgresql.image.repository=postgresql \
+            --set postgresql.image.tag=16 \
             --atomic
